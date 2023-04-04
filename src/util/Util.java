@@ -136,4 +136,26 @@ public class Util {
         return bounded_x;
     }
 
+    public static int[] generateAcoArr(int n, int l){
+        int length = n * l;
+        int[] res = new int[length];
+        for (int i = 0; i < length; i++) {
+            res[i] = i;
+        }
+        res = shuffleArray(res);
+        for (int i = 0; i < n; i++) {
+            int[] index = new int[l];
+            int indexI = 0;
+            for (int j = 0; j < res.length; j++) {
+                if(res[j] % n == i){
+                    index[indexI++] = j;
+                }
+            }
+            for (int j = 0; j < l; j++) {
+                res[index[j]] = i + j * n;
+            }
+        }
+        return res;
+    }
+
 }

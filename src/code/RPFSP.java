@@ -76,6 +76,10 @@ public class RPFSP implements Cloneable {
         }
     }
 
+    public static int[][] getProcessingTimes() {
+        return processingTimes;
+    }
+
     private static int[][] change(int[][] processingTimes) {
         int[][] mTimes = new int[processingTimes[0].length][processingTimes.length];
         for (int i = 0; i < processingTimes.length; i++) {
@@ -406,6 +410,14 @@ public class RPFSP implements Cloneable {
             }
         }
         jobOrder[index] = jobIndexPairs[index].index;
+        return jobOrder;
+    }
+
+    public static int[] getJobOrder(int[] path) {
+        int[] jobOrder = new int[path.length];
+        for (int i = 0; i < path.length; i++) {
+            jobOrder[i] = path[i] % RPFSP.getN();
+        }
         return jobOrder;
     }
 
