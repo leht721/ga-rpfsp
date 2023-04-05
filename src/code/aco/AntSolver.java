@@ -9,11 +9,11 @@ import java.util.List;
 
 public class AntSolver {
     public static final double ALPHA = 1.0; // 信息素重要程度
-    public static final double BETA = 5.0; // 启发式信息重要程度
-    public static final double RHO = 0.5; // 信息素蒸发率
-    public static final double Q = 3000.0; // 信息素增量
-    public static final int NUM_ANTS = 10; // 蚂蚁数量
-    public static final int MAX_ITERATIONS = 100; // 最大迭代次数
+    public static final double BETA = 1.0; // 启发式信息重要程度
+    public static double RHO; // 信息素蒸发率---r值大的时候以前走过的路再走的可能性较低，可以增高全局搜索能力
+    public static final double Q = 4000.0; // 信息素增量
+    public static final int NUM_ANTS = 30; // 蚂蚁数量
+    public static final int MAX_ITERATIONS = 1000; // 最大迭代次数
     public static final int jobLength = RPFSP.getL() * RPFSP.getN();
     private double[][] pheromoneMatrix; // 信息素矩阵
     private double[][] heuristicMatrix; // 启发式信息矩阵
@@ -23,6 +23,7 @@ public class AntSolver {
     private double[] record;
 
     public AntSolver() {
+        this.record = new double[MAX_ITERATIONS];
         this.pheromoneMatrix = new double[jobLength][jobLength];
         this.heuristicMatrix = new double[jobLength][jobLength];
         initializePheromoneMatrix();
@@ -77,6 +78,7 @@ public class AntSolver {
         for (int k = 1; k < processingTimes.length; k++) {
             arr[k][1] = Math.max(arr[k][0], arr[k - 1][1]) + processingTimes[k][j];
         }
+        if(j - i == RPFSP.getN()) return arr[RPFSP.getM() - 1][1] * 2;
         return arr[RPFSP.getM() - 1][1];
     }
 
@@ -116,20 +118,34 @@ public class AntSolver {
     public void solve() {
         updatePheromones();
         for (int i = 0; i < MAX_ITERATIONS; i++) {
+            if(i < MAX_ITERATIONS * 0.4){
+                RHO = 0.75;
+            }else if (i < MAX_ITERATIONS * 0.8){
+                RHO = 0.6;
+            }else {
+                RHO = 0.4;
+            }
             // 初始化每一只蚂蚁
-            for (int j = 0; j < ants.size(); j++) {
+            ants.clear();
+            for (int j = 0; j < NUM_ANTS; j++) {
                 ants.add(new Ant(jobLength));
             }
             for (int j = 0; j < jobLength - 1; j++) {
                 for (Ant ant : ants) {
-                    ant.selectNextjob(pheromoneMatrix, heuristicMatrix);
+                    int nextjob = ant.selectNextjob(pheromoneMatrix, heuristicMatrix);
+                    ant.updatePath(nextjob);
                 }
+//                System.out.println("--");
             }
+//            System.out.println(" ");
             // 计算每只蚂蚁的路径长度
             calculatePathLengths();
             // 更新信息素
             updatePheromones();
             printBestSolution();
+            record[i] = bestPathLength;
+            System.out.print("第" + (i+1) + "代:CMAX = " + record[i]);
+            System.out.println("   序列：" + Arrays.toString(bestSolution));
         }
     }
 

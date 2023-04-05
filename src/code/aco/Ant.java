@@ -27,6 +27,7 @@ public class Ant {
     }
 
     public Ant(int numJobs) {
+        this.index = 0;
         this.solution = new int[numJobs];
         Random random = new Random();
         int start = random.nextInt(RPFSP.getN());
@@ -38,7 +39,7 @@ public class Ant {
             if(i == start) continue;
             this.unfinishedJobs.add(i);
         }
-        this.index = 1;
+        this.solution[index++] = start;
         this.pathLength = 0.0;
     }
 
@@ -74,33 +75,36 @@ public class Ant {
     public int selectNextjob(double[][] pheromone, double[][] heuristicInfo) {
         double sumProbabilities = 0.0;
         List<Integer> reasonable = getReasonableJob(RPFSP.getN() * RPFSP.getL());
-        double[] probabilities = new double[reasonable.size()];
-        int index = 0;
+        double[] probabilities = new double[pheromone.length];
         for (int i = 0; i < heuristicInfo.length; i++) {
             if (reasonable.contains(i)) {
-                probabilities[index] = Math.pow(pheromone[currentJob][i], AntSolver.ALPHA)
+                probabilities[i] = Math.pow(pheromone[currentJob][i], AntSolver.ALPHA)
                         * Math.pow(heuristicInfo[currentJob][i], AntSolver.BETA);
-                sumProbabilities += probabilities[index++];
+                sumProbabilities += probabilities[i];
             }
         }
         // 轮盘赌选择下一个工作站
         double rouletteWheel = Math.random() * sumProbabilities;
         double currentProb = 0.0;
-        for (int i = 0; i < probabilities.length; i++) {
-            if (unfinishedJobs.contains(i)) {
-                currentProb += probabilities[i] / sumProbabilities;
-                if (currentProb > rouletteWheel) {
-                    this.solution[index++] = reasonable.get(i);
-                    return reasonable.get(i);
-                }
+        for (int i = 0; i < pheromone.length; i++) {
+            if(probabilities[i] == 0) continue;
+            currentProb += probabilities[i];
+            if (currentProb > rouletteWheel) {
+                this.solution[index++] = i;
+                this.currentJob = i;
+                return i;
             }
         }
         // 如果没有选择到下一个工作站，返回第一个未完成的作业
-        return unfinishedJobs.get(0);
+//        throw new ArrayIndexOutOfBoundsException();
+        int i = unfinishedJobs.get(0);
+        this.solution[index++] = i;
+        this.currentJob = i;
+        return i;
     }
 
     // 更新路径长度和状态
-    public void updatePathLength(int jobIndex) {
+    public void updatePath(int jobIndex) {
         unfinishedJobs.remove(new Integer(jobIndex));
         finishedJobs.add(currentJob);
     }

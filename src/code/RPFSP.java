@@ -417,6 +417,7 @@ public class RPFSP implements Cloneable {
         int[] jobOrder = new int[path.length];
         for (int i = 0; i < path.length; i++) {
             jobOrder[i] = path[i] % RPFSP.getN();
+            if(jobOrder[i] >= 10) System.out.println("fadsldfjalsdfjas;dfjakls");
         }
         return jobOrder;
     }
