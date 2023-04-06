@@ -9,9 +9,9 @@ import java.util.List;
 
 public class AntSolver {
     public static final double ALPHA = 1.0; // 信息素重要程度
-    public static final double BETA = 1.0; // 启发式信息重要程度
+    public static final double BETA = 4.0; // 启发式信息重要程度
     public static double RHO; // 信息素蒸发率---r值大的时候以前走过的路再走的可能性较低，可以增高全局搜索能力
-    public static final double Q = 4000.0; // 信息素增量
+    public static final double Q = 2000.0; // 信息素增量
     public static final int NUM_ANTS = 30; // 蚂蚁数量
     public static final int MAX_ITERATIONS = 1000; // 最大迭代次数
     public static final int jobLength = RPFSP.getL() * RPFSP.getN();
@@ -118,10 +118,10 @@ public class AntSolver {
     public void solve() {
         updatePheromones();
         for (int i = 0; i < MAX_ITERATIONS; i++) {
-            if(i < MAX_ITERATIONS * 0.4){
-                RHO = 0.75;
+            if(i < MAX_ITERATIONS * 0.5){
+                RHO = 0.8;
             }else if (i < MAX_ITERATIONS * 0.8){
-                RHO = 0.6;
+                RHO = 0.7;
             }else {
                 RHO = 0.4;
             }

@@ -1,12 +1,13 @@
-package code.pso;
+package code.spso;
 
 import code.RPFSP;
+import code.pso.Particle;
 import util.Util;
 
 import java.util.Arrays;
 import java.util.Random;
 
-public class PSO {
+public class SA_PSO {
     private static final int NUM_PARTICLES = 30;
     private static final int NUM_ITERATIONS = 400;
     private static final double C1 = 2.0;
@@ -40,16 +41,17 @@ public class PSO {
         Random rand = new Random();
         record = new double[NUM_ITERATIONS];
         for (int iter = 0; iter < NUM_ITERATIONS; iter++) {
+            SA sa = new SA(RPFSP.getJobOrder(gBest.getPosition()), gBest.getCmax(gBest.getPosition()));
+            sa.solve();
             for (Particle particle : particles) {
                 particle.updateVelocity(gBest, C1, C2, W, rand);
                 particle.updatePosition(rand);
             }
             for (Particle particle : particles){
-                double p = particle.getFitness(particle.getPosition());
-                if(p > particle.getFitness(particle.getpBest())){
+                if(particle.getFitness(particle.getPosition()) > particle.getFitness(particle.getpBest())){
                     particle.setpBest(Arrays.copyOf(particle.getPosition(), particle.getPosition().length));
                 }
-                if (p > gBest.getFitness(gBest.getPosition())) {
+                if (particle.getFitness(particle.getPosition()) > gBest.getFitness(gBest.getPosition())) {
                     gBest.setPosition(particle.getPosition());
                 }
             }

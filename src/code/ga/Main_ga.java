@@ -11,7 +11,7 @@ import java.util.Map;
  * @author neulht @create
  * 2023-03-20 15:43
  */
-public class Main {
+public class Main_ga {
     public static void main(String[] args) throws CloneNotSupportedException {
         GA ga = new GA();
         RPFSP best = ga.solve();

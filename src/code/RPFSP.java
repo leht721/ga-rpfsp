@@ -372,21 +372,6 @@ public class RPFSP implements Cloneable {
         return schedule[processingTimes.length - 1][processingTimes[0].length - 1][1];
     }
 
-    public int[] decode(String encoding) {
-        int[] permutation = new int[cLength];
-        switch (encoding) {
-            case "random":
-                for (int i = 0; i < n; i++) {
-                    permutation[i] = i;
-                }
-                Util.shuffleArray(permutation);
-                break;
-            // Other decoding methods can be implemented here
-            default:
-                throw new IllegalArgumentException("Invalid encoding method: " + encoding);
-        }
-        return permutation;
-    }
 
     public static int[] getJobOrder(double[] position) {
         JobIndexPair[] jobIndexPairs = new JobIndexPair[cLength];
@@ -417,7 +402,6 @@ public class RPFSP implements Cloneable {
         int[] jobOrder = new int[path.length];
         for (int i = 0; i < path.length; i++) {
             jobOrder[i] = path[i] % RPFSP.getN();
-            if(jobOrder[i] >= 10) System.out.println("fadsldfjalsdfjas;dfjakls");
         }
         return jobOrder;
     }
