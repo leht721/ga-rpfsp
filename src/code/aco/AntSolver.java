@@ -9,11 +9,11 @@ import java.util.List;
 
 public class AntSolver {
     public static final double ALPHA = 1.0; // 信息素重要程度
-    public static final double BETA = 4.0; // 启发式信息重要程度
+    public static final double BETA = 2.0; // 启发式信息重要程度
     public static double RHO; // 信息素蒸发率---r值大的时候以前走过的路再走的可能性较低，可以增高全局搜索能力
-    public static final double Q = 2000.0; // 信息素增量
-    public static final int NUM_ANTS = 30; // 蚂蚁数量
-    public static final int MAX_ITERATIONS = 1000; // 最大迭代次数
+    public static final double Q = 2500.0; // 信息素增量
+    public static final int NUM_ANTS = 35; // 蚂蚁数量
+    public static final int MAX_ITERATIONS = 600; // 最大迭代次数
     public static final int jobLength = RPFSP.getL() * RPFSP.getN();
     private double[][] pheromoneMatrix; // 信息素矩阵
     private double[][] heuristicMatrix; // 启发式信息矩阵
@@ -21,6 +21,10 @@ public class AntSolver {
     private int[] bestSolution; // 最优解
     private double bestPathLength; // 最短路径长度
     private double[] record;
+
+    public double[] getRecord() {
+        return record;
+    }
 
     public AntSolver() {
         this.record = new double[MAX_ITERATIONS];
@@ -142,20 +146,10 @@ public class AntSolver {
             calculatePathLengths();
             // 更新信息素
             updatePheromones();
-            printBestSolution();
-            record[i] = bestPathLength;
+            record[i] = Util.change(bestPathLength);
             System.out.print("第" + (i+1) + "代:CMAX = " + record[i]);
             System.out.println("   序列：" + Arrays.toString(bestSolution));
         }
     }
 
-    // 输出最优解
-    public void printBestSolution() {
-        System.out.print("Best solution: ");
-        for (int i = 0; i < jobLength; i++) {
-            System.out.print(bestSolution[i] + " ");
-        }
-        System.out.println();
-        System.out.println("Best path length: " + bestPathLength);
-    }
 }

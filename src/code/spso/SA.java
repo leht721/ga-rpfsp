@@ -10,7 +10,7 @@ public class SA {
     // 初始温度
     private static final double T = 100;
     // 终止温度
-    private static final double T_Min = 20;
+    private static final double T_Min = 50;
     // 降温速率
     private static final double COOLINGRATE = 0.95;
     // 内循环次数
@@ -31,7 +31,11 @@ public class SA {
         this.bestCmax = cmax;
     }
 
-    // 产生邻域解
+    /**
+     * 通过互换两个工件的所有工序产生邻域解
+     * @param order
+     * @return
+     */
     private int[] generateNeighbor(int[] order) {
         int length = order.length;
         Random random = new Random();
@@ -49,18 +53,80 @@ public class SA {
         return res;
     }
 
+    /**
+     * 通过集体移动一个工件的所有工序来产生邻域解
+     * @param order
+     * @return
+     */
+    private int[] generateNeighbor1(int[] order) {
+        int[] copy = Arrays.copyOf(order, order.length);
+        Random rand = new Random();
+        int a = copy[rand.nextInt(copy.length)];
+        if(rand.nextDouble() < 0.5){
+            for (int i = 0; i < copy.length - 1; i++) {
+                if (copy[i] == a) {
+                    if (i < copy.length - 1) {
+                        int temp = copy[i];
+                        copy[i] = copy[i+1];
+                        copy[i+1] = temp;
+                        i++; // 跳过交换后的下一个元素
+                    }
+                }
+            }
+        }else {
+            for (int i = copy.length - 1; i > 0; i--) {
+                if (copy[i] == a) {
+                    if (i > 0) {
+                        int temp = copy[i];
+                        copy[i] = copy[i-1];
+                        copy[i-1] = temp;
+                        i--; // 跳过交换后的下一个元素
+                    }
+                }
+            }
+        }
+        return copy;
+    }
+
+    /**
+     * 通过逆序一定区间内的工序
+     * @param order
+     * @return
+     */
+    private int[] generateNeighbor2(int[] order) {
+        int[] copy = Arrays.copyOf(order, order.length);
+        Random rand = new Random();
+        int index1 = rand.nextInt(copy.length);
+        int index2 = rand.nextInt(copy.length);
+        while (index2 == index1) { // 确保index2与index1不同
+            index2 = rand.nextInt(copy.length);
+        }
+        if (index1 > index2) { // 确保index1小于等于index2
+            int temp = index1;
+            index1 = index2;
+            index2 = temp;
+        }
+        for (int i = index1, j = index2; i < j; i++, j--) {
+            int temp = copy[i];
+            copy[i] = copy[j];
+            copy[j] = temp;
+        }
+        return copy;
+    }
+
+
     // 模拟退火算法
     public int[] solve() {
         // 初始化初始解
         int[] currentOrder = Arrays.copyOf(bestSolution, bestSolution.length);
         double currentCmax = bestCmax;
-        System.out.println("SA开始           " + bestCmax);
+//        System.out.println("SA开始           " + bestCmax);
         double t = T;
         // 在每个温度下迭代一定次数，进行状态转移
         while (t > T_Min) {
             for (int i = 0; i < N; i++) {
                 // 产生邻域解
-                int[] neighborOrder = generateNeighbor(currentOrder);
+                int[] neighborOrder = generateNeighbor2(currentOrder);
                 RPFSP rpfsp = new RPFSP(neighborOrder);
                 double neighborMaxTime = rpfsp.getMaxCompletionTime(rpfsp.decodeChromosome(rpfsp.chromosome));
 
@@ -89,10 +155,10 @@ public class SA {
             t *= COOLINGRATE;
         }
         if(bestCmax < psoCmax){
-            System.out.println("SA结束      " + bestCmax);
+//            System.out.println("SA结束      " + bestCmax);
             return bestSolution;
         }else {
-            System.out.println("SA结束      " + psoCmax);
+//            System.out.println("SA结束      " + psoCmax);
             return psoSolution;
         }
     }

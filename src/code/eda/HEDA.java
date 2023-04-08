@@ -18,10 +18,10 @@ public class HEDA {
     private static final int POPULATION_SIZE = 70;
 
     // 最大迭代次数
-    private static final int MAX_ITERATIONS = 1000;
+    private static final int MAX_ITERATIONS = 500;
 
     // 学习速率
-    private static final double ALFA = 0.02;
+    private static final double ALFA = 0.01;
 
     // 累计次数阈值
     private static final int COUNT_MAX = 20;
@@ -30,19 +30,19 @@ public class HEDA {
     private static final double BORDER = 1.2;
 
     // 变异概率
-    private static final double MUTATION_RATE = 0.3;
+    private static final double MUTATION_RATE = 0.45;
 
     // 局部搜索个体占比
-    private static final double LOCAL_RATE = 0.25;
+    private static final double LOCAL_RATE = 0.4;
 
     // 随机搜索个体占比
-    private static final double RANDOM_RATE = 0.15;
+    private static final double RANDOM_RATE = 0.4;
 
     // 局部搜索的单个个体搜索的最大次数
-    private static final int MAX_LOCALITER = 40;
+    private static final int MAX_LOCALITER = 70;
 
     // 局部搜索个体占比
-    private static final int MAX_RANDOMSEARCH = 20;
+    private static final int MAX_RANDOMSEARCH = 40;
 
     // 概率矩阵
     private static double[][] pMatrix;
@@ -77,7 +77,7 @@ public class HEDA {
             String[] firstLine = line.split(" ");
             int m = Integer.parseInt(firstLine[0]);
             int n = Integer.parseInt(firstLine[1]);
-            pMatrix = new double[n / 2][n];
+            pMatrix = new double[RPFSP.getN()][RPFSP.getN() * RPFSP.getL()];
             reader.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();

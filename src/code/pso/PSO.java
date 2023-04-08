@@ -8,12 +8,16 @@ import java.util.Random;
 
 public class PSO {
     private static final int NUM_PARTICLES = 30;
-    private static final int NUM_ITERATIONS = 400;
+    private static final int NUM_ITERATIONS = 300;
     private static final double C1 = 2.0;
     private static final double C2 = 2.0;
     private static final double W = 0.7;
     private static Particle gBest; // 全局最优
     private double[] record;
+
+    public double[] getRecord() {
+        return record;
+    }
 
     private Particle[] particles; // 粒子群
 

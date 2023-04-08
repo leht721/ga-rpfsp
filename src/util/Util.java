@@ -1,15 +1,16 @@
 package util;
 
+import java.io.*;
 import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Random;
-import java.io.File;
-import java.io.FileOutputStream;
 
 import code.RPFSP;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -104,6 +105,27 @@ public class Util {
             e.printStackTrace();
         }
     }
+
+    public static void write(double[] arr,String fileName, int index, int sheetIndex) throws IOException {
+        // 创建工作簿对象
+        XSSFWorkbook workbook = new XSSFWorkbook(new FileInputStream(fileName));
+        // 获取第一个工作表
+        XSSFSheet sheet = workbook.getSheetAt(sheetIndex);
+        // 创建一行并指定行号
+        XSSFRow row = sheet.createRow(index); // 这里假设要写入第三行
+        // 创建一个单元格并指定列号
+        for (int j = 0; j < arr.length; j++) {
+
+            Cell cell = row.createCell(j);
+            cell.setCellValue(arr[j]);
+
+        }
+        // 将工作簿保存到文件中
+        FileOutputStream fileOut = new FileOutputStream(fileName);
+        workbook.write(fileOut);
+        fileOut.close();
+    }
+
     public static void generateMatrix(int m, int n, int a, int b) {
         int[][] matrix = new int[m][n];
         Random rand = new Random();

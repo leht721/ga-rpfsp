@@ -5,16 +5,22 @@ import code.pso.Particle;
 import util.Util;
 
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 public class SA_PSO {
     private static final int NUM_PARTICLES = 30;
-    private static final int NUM_ITERATIONS = 400;
+    private static final int NUM_ITERATIONS = 300;
     private static final double C1 = 2.0;
     private static final double C2 = 2.0;
     private static final double W = 0.7;
     private static Particle gBest; // 全局最优
     private double[] record;
+
+    public double[] getRecord() {
+        return record;
+    }
 
     private Particle[] particles; // 粒子群
 
@@ -42,7 +48,10 @@ public class SA_PSO {
         record = new double[NUM_ITERATIONS];
         for (int iter = 0; iter < NUM_ITERATIONS; iter++) {
             SA sa = new SA(RPFSP.getJobOrder(gBest.getPosition()), gBest.getCmax(gBest.getPosition()));
-            sa.solve();
+            int[] solve = sa.solve();
+//            System.out.println(Arrays.toString(solve));
+            double[] position = convertToPosition(solve);
+            gBest.setPosition(position);
             for (Particle particle : particles) {
                 particle.updateVelocity(gBest, C1, C2, W, rand);
                 particle.updatePosition(rand);
@@ -67,6 +76,30 @@ public class SA_PSO {
         System.out.println("Optimal job order: " + Arrays.toString(RPFSP.getJobOrder(gBest.getPosition())));
         best.init();
         return best;
+    }
+
+    private double[] convertToPosition(int[] solve) {
+        int[] arr = new int[solve.length];
+//        System.out.println(Arrays.toString(solve));
+        int index = 1;
+        HashMap<Integer, Integer> map = new HashMap<Integer, Integer>();
+        for (int j = 0; j < RPFSP.getN(); j++) {
+            for (int k = 0; k < solve.length; k++) {
+                if(solve[k] == j){
+                    map.put(index, k);
+                    arr[k] = index;
+                    index++;
+                }
+            }
+        }
+        double[] position = new double[solve.length];
+        for (int i = 0; i < position.length; i++) {
+            position[i] = (map.get(i + 1) + Math.random()) / (RPFSP.getN() * RPFSP.getL());
+        }
+        int[] jobOrder = RPFSP.getJobOrder(position);
+//        System.out.println(Arrays.toString(jobOrder));
+//        System.out.println(Arrays.toString(arr));
+        return position;
     }
 
 }
