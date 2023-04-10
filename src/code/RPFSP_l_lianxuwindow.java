@@ -8,16 +8,19 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 
 import static util.Util.shuffleArray;
 
 /**
- * 重入层数为l，基于役龄的维护策略
+ * 重入层数为l，基于连续运行时间的时间窗维护策略
  * @author neulht @create
  * 2023-03-14 16:23
  */
-public class RPFSP implements Cloneable {
+public class RPFSP_l_lianxuwindow implements Cloneable {
     private static int[][] processingTimes; // 工件在各个生产阶段的加工时间
     private static int[][] mTimes; // 工件在各个生产阶段的加工时间
     private static int m;  // 生产车间中的机器数量
@@ -90,7 +93,7 @@ public class RPFSP implements Cloneable {
         }
         return mTimes;
     }
-    public RPFSP() {
+    public RPFSP_l_lianxuwindow() {
         this.pmMatrix = new int[m][cLength];
         this.pmTime = 0.0;
         this.recordPM = new HashMap<Pair, Double>();
@@ -110,7 +113,7 @@ public class RPFSP implements Cloneable {
         chromosome = shuffleArray(chromosome);
     }
 
-    public RPFSP(int[] chromosome) {
+    public RPFSP_l_lianxuwindow(int[] chromosome) {
         this.pmMatrix = new int[m][cLength];
         this.pmTime = 0.0;
         this.recordPM = new HashMap<Pair, Double>();
@@ -144,9 +147,9 @@ public class RPFSP implements Cloneable {
     }
 
     @Override
-    public RPFSP clone() throws CloneNotSupportedException {
-        RPFSP clone = new RPFSP();
-        clone = (RPFSP) super.clone();
+    public RPFSP_l_lianxuwindow clone() throws CloneNotSupportedException {
+        RPFSP_l_lianxuwindow clone = new RPFSP_l_lianxuwindow();
+        clone = (RPFSP_l_lianxuwindow) super.clone();
         clone.chromosome = Arrays.copyOf(this.chromosome, this.chromosome.length);
         clone.recordPM = new HashMap<>(this.recordPM);
         clone.pmMatrix = new int[m][cLength];
@@ -299,14 +302,23 @@ public class RPFSP implements Cloneable {
             double age_e = ctime[indexM] + processingTimes[indexM][ptIndex] + lamda[indexM] * ctime[indexM];//预测役龄只计算了工件的加工时间和恶化时间，不算MR
             double end_e = start + processingTimes[indexM][ptIndex] + lamda[indexM] * ctime[indexM] +
                     Util.change(Math.pow(age_e / yita, beta) - Math.pow(ctime[indexM] / yita, beta)) * tmr;
-            if(age_e <= T){
+            if(end_e - starts[indexM] <= low){
                 schedule[indexM][indexPJob][0] = Util.change(start);
                 schedule[indexM][indexPJob][1] = end_e;
                 etime[indexM] += lamda[indexM] * ctime[indexM] + Util.change(Math.pow(age_e / yita, beta) - Math.pow(ctime[indexM] / yita, beta)) * tmr;
                 ctime[indexM] += schedule[indexM][indexPJob][1] - schedule[indexM][indexPJob][0];
+            }else if(end_e - starts[indexM] + tpm <= up){
+                schedule[indexM][indexPJob][0] = Util.change(start);
+                schedule[indexM][indexPJob][1] = end_e;
+                etime[indexM] += lamda[indexM] * ctime[indexM] + Util.change(Math.pow(age_e / yita, beta) - Math.pow(ctime[indexM] / yita, beta)) * tmr;
+                ctime[indexM] += schedule[indexM][indexPJob][1] - schedule[indexM][indexPJob][0];
+                pmMatrix[indexM][indexPJob] = 1;
+                recordPM.put(new Pair(indexM, indexPJob), schedule[indexM][indexPJob][1]);
+                pmTime += tpm;
+                ctime[indexM] = 0;
             }else {
                 pmMatrix[indexM][indexPJob - 1] = 1;
-                recordPM.put(pair, schedule[indexM][indexPJob - 1][1]);
+                recordPM.put(pair, starts[indexM] + low);
                 pmTime += tpm;
                 starts[indexM] = schedule[indexM][indexPJob][0] = Math.max(recordPM.get(pair) + tpm, prevM);
                 double age_e_e = processingTimes[indexM][ptIndex];//役龄预测不算MR
@@ -398,7 +410,7 @@ public class RPFSP implements Cloneable {
     public static int[] getJobOrder(int[] path) {
         int[] jobOrder = new int[path.length];
         for (int i = 0; i < path.length; i++) {
-            jobOrder[i] = path[i] % RPFSP.getN();
+            jobOrder[i] = path[i] % RPFSP_l_lianxuwindow.getN();
         }
         return jobOrder;
     }

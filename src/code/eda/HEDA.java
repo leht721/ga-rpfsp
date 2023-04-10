@@ -15,10 +15,10 @@ import java.util.*;
  */
 public class HEDA {
     // 种群中的染色体数量
-    private static final int POPULATION_SIZE = 70;
+    private static final int POPULATION_SIZE = 10000;
 
     // 最大迭代次数
-    private static final int MAX_ITERATIONS = 500;
+    private static final int MAX_ITERATIONS = 1000;
 
     // 学习速率
     private static final double ALFA = 0.01;
@@ -54,7 +54,7 @@ public class HEDA {
     private RPFSP best;
 
     // 更新概率矩阵个体占比
-    private static final double UPFATE_RATIO = 0.15;
+    private static final double UPFATE_RATIO = 0.3;
 
     // 全局最优个体
     private RPFSP bestGlobal;
@@ -77,7 +77,8 @@ public class HEDA {
             String[] firstLine = line.split(" ");
             int m = Integer.parseInt(firstLine[0]);
             int n = Integer.parseInt(firstLine[1]);
-            pMatrix = new double[RPFSP.getN()][RPFSP.getN() * RPFSP.getL()];
+            int l = Integer.parseInt(firstLine[2]);
+            pMatrix = new double[n][n * l];
             reader.close();
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -117,7 +118,7 @@ public class HEDA {
             int[] flag = new int[pMatrix.length];
             int[] chromosome = new int[pMatrix[0].length];
             for (int j = 0; j < chromosome.length; j++) {
-                int res = selectJob(j, flag);
+                int res = selectJob1(j, flag);
                 chromosome[j] = res;
             }
             newPopulation[i] = new RPFSP(chromosome);
@@ -135,7 +136,7 @@ public class HEDA {
         double[] sortedArr = Arrays.copyOf(jobProb, jobProb.length);
         Arrays.sort(sortedArr);
         int res = -1;
-        while (res == -1 || flag[res] == 2){
+        while (res == -1 || flag[res] == RPFSP.getL()){
             double sum = 0.0;
             Random random = new Random();
             double dest = 0.0;
@@ -156,6 +157,31 @@ public class HEDA {
                 res = candidateIndices.get(rand.nextInt(candidateIndices.size()));
             }else {
                 res = candidateIndices.get(0);
+            }
+        }
+        flag[res]++;
+        return res;
+    }
+
+    // 工件选择
+    private int selectJob1(int index, int[] flag) {
+
+        double[] jobProb = new double[flag.length];
+        for (int i = 0; i < jobProb.length; i++) {
+            jobProb[i] = pMatrix[i][index];
+        }
+        double[] sortedArr = Arrays.copyOf(jobProb, jobProb.length);
+        int res = -1;
+        while (res == -1 || flag[res] == RPFSP.getL()){
+            double sum = 0.0;
+            Random random = new Random();
+            double a = random.nextDouble();
+            for (int i = 0; i < jobProb.length; i++) {
+                sum += sortedArr[i];
+                if (sum >= a) {
+                    res = i;
+                    break;
+                }
             }
         }
         flag[res]++;
