@@ -1,17 +1,15 @@
-package code.spso;
+package code.vns_pso;
 
 import code.RPFSP;
 import code.pso.Particle;
 import util.Util;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Random;
 
-public class SA_PSO {
+public class VNS_PSO {
     private static final int NUM_PARTICLES = 30;
-    private static final int NUM_ITERATIONS = 300;
+    private static final int NUM_ITERATIONS = 200;
     private static final double C1 = 2.0;
     private static final double C2 = 2.0;
     private static final double W = 0.7;
@@ -47,20 +45,22 @@ public class SA_PSO {
         Random rand = new Random();
         record = new double[NUM_ITERATIONS];
         for (int iter = 0; iter < NUM_ITERATIONS; iter++) {
-            SA sa = new SA(RPFSP.getJobOrder(gBest.getPosition()), gBest.getCmax(gBest.getPosition()));
-            int[] solve = sa.solve();
+            System.out.println("前" + Arrays.toString(RPFSP.getJobOrder(gBest.getPosition())));
+            VNS vns = new VNS(RPFSP.getJobOrder(gBest.getPosition()), gBest.getCmax(gBest.getPosition()));
+            int[] solve = vns.solve();
             double[] pNewGbest = convertToPosition1(gBest.getPosition(), solve);
-//            double[] position = convertToPosition(solve);
             gBest.setPosition(pNewGbest);
+            System.out.println("后" + Arrays.toString(RPFSP.getJobOrder(gBest.getPosition())));
             for (Particle particle : particles) {
                 particle.updateVelocity(gBest, C1, C2, W, rand);
                 particle.updatePosition(rand);
             }
             for (Particle particle : particles){
-                if(particle.getFitness(particle.getPosition()) > particle.getFitness(particle.getpBest())){
+                double p = particle.getFitness(particle.getPosition());
+                if(p > particle.getFitness(particle.getpBest())){
                     particle.setpBest(Arrays.copyOf(particle.getPosition(), particle.getPosition().length));
                 }
-                if (particle.getFitness(particle.getPosition()) > gBest.getFitness(gBest.getPosition())) {
+                if (p > gBest.getFitness(gBest.getPosition())) {
                     gBest.setPosition(particle.getPosition());
                 }
             }
@@ -91,30 +91,6 @@ public class SA_PSO {
             index[solve[i]]++;
         }
         return res;
-    }
-
-    private double[] convertToPosition(int[] solve) {
-        int[] arr = new int[solve.length];
-//        System.out.println(Arrays.toString(solve));
-        int index = 1;
-        HashMap<Integer, Integer> map = new HashMap<Integer, Integer>();
-        for (int j = 0; j < RPFSP.getN(); j++) {
-            for (int k = 0; k < solve.length; k++) {
-                if(solve[k] == j){
-                    map.put(index, k);
-                    arr[k] = index;
-                    index++;
-                }
-            }
-        }
-        double[] position = new double[solve.length];
-        for (int i = 0; i < position.length; i++) {
-            position[i] = (map.get(i + 1) + Math.random()) / (RPFSP.getN() * RPFSP.getL());
-        }
-        int[] jobOrder = RPFSP.getJobOrder(position);
-//        System.out.println(Arrays.toString(jobOrder));
-//        System.out.println(Arrays.toString(arr));
-        return position;
     }
 
 }

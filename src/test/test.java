@@ -8,7 +8,7 @@ import util.Util;
  */
 public class test {
     public static void main(String[] args) {
-        Util.generateMatrix(5, 12, 10, 90);
+        Util.generateMatrix(5, 24, 10, 90);
 //        System.out.println(Util.findLow(53, 510, 215.44));
 //        int i = 0;
 //        i += 2 - 1;
