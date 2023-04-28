@@ -8,7 +8,10 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 
 import static util.Util.shuffleArray;
 
@@ -17,7 +20,7 @@ import static util.Util.shuffleArray;
  * @author neulht @create
  * 2023-03-14 16:23
  */
-public class RPFSP implements Cloneable {
+public class RPFSP_NoLearning implements Cloneable {
     private static int[][] processingTimes; // 工件在各个生产阶段的加工时间
     private static int[][] mTimes; // 工件在各个生产阶段的加工时间
     private static int m;  // 生产车间中的机器数量
@@ -39,9 +42,7 @@ public class RPFSP implements Cloneable {
     private double pmTime; //PM总时间
     private Map<Pair, Double> recordPM; //PM记录
     private double[] ctime; //每台机器连续加工时间
-    private double[] etime; //每台机器由于线性恶化
-    private double[] mrtime; //每台机器MR造成的恶化时间
-    private double[] ltime; //学习效应造成的时间
+    private double[] etime; //每台机器由于恶化和MR造成的恶化时间
     private double[][][] schedule; //实际加工时间矩阵
     public int[] chromosome; //染色体加工序列
     public double[] starts; //计算每个时间窗的开始时间
@@ -99,14 +100,12 @@ public class RPFSP implements Cloneable {
         }
         return mTimes;
     }
-    public RPFSP() {
+    public RPFSP_NoLearning() {
         this.pmMatrix = new int[m][cLength];
         this.pmTime = 0.0;
         this.recordPM = new HashMap<Pair, Double>();
         this.ctime = new double[m];
         this.etime = new double[m];
-        this.mrtime = new double[m];
-        this.ltime = new double[m];
         this.schedule = new double[m][cLength][2];
         chromosome = new int[cLength];
         this.starts = new double[m];
@@ -121,14 +120,12 @@ public class RPFSP implements Cloneable {
         chromosome = shuffleArray(chromosome);
     }
 
-    public RPFSP(int[] chromosome) {
+    public RPFSP_NoLearning(int[] chromosome) {
         this.pmMatrix = new int[m][cLength];
         this.pmTime = 0.0;
         this.recordPM = new HashMap<Pair, Double>();
         this.ctime = new double[m];
         this.etime = new double[m];
-        this.mrtime = new double[m];
-        this.ltime = new double[m];
         this.schedule = new double[m][cLength][2];
         this.chromosome = Arrays.copyOf(chromosome, chromosome.length);
         this.starts = new double[m];
@@ -145,8 +142,7 @@ public class RPFSP implements Cloneable {
             tmr = Double.valueOf(sArr[1]);
             beta = Integer.valueOf(sArr[2]);
             yita = Integer.valueOf(sArr[3]);
-//            T = Util.change(yita * Math.pow(-Math.log(0.8), 1.0 / beta));
-            T = 1000;
+            T = Util.change(yita * Math.pow(tpm / (tmr * (beta - 1)), 1.0 / beta));
             String[] sArr1 = reader.readLine().split(" ");
             up = (int) (T + Integer.parseInt(sArr1[0]) + tpm);
             low = (int) (T - Integer.parseInt(sArr1[1]));
@@ -158,21 +154,17 @@ public class RPFSP implements Cloneable {
     }
 
     @Override
-    public RPFSP clone() throws CloneNotSupportedException {
-        RPFSP clone = new RPFSP();
-        clone = (RPFSP) super.clone();
+    public RPFSP_NoLearning clone() throws CloneNotSupportedException {
+        RPFSP_NoLearning clone = new RPFSP_NoLearning();
+        clone = (RPFSP_NoLearning) super.clone();
         clone.chromosome = Arrays.copyOf(this.chromosome, this.chromosome.length);
         clone.recordPM = new HashMap<>(this.recordPM);
         clone.pmMatrix = new int[m][cLength];
         clone.ctime = new double[m];
         clone.etime = new double[m];
-        clone.mrtime = new double[m];
-        clone.ltime = new double[m];
         for (int i = 0; i < clone.ctime.length; i++) {
             clone.ctime[i] = this.ctime[i];
             clone.etime[i] = this.etime[i];
-            clone.mrtime[i] = this.mrtime[i];
-            clone.ltime[i] = this.ltime[i];
         }
         clone.schedule = new double[m][cLength][2];
         for (int i = 0; i < clone.schedule.length; i++) {
@@ -221,14 +213,6 @@ public class RPFSP implements Cloneable {
         return pmTime;
     }
 
-    public double[] getMrtime() {
-        return mrtime;
-    }
-
-    public double[] getLtime() {
-        return ltime;
-    }
-
     public Map<Pair, Double> getRecordPM() {
         return recordPM;
     }
@@ -249,8 +233,6 @@ public class RPFSP implements Cloneable {
         this.ctime = new double[m];
         this.etime = new double[m];
         this.schedule = new double[m][cLength][2];
-        this.ltime = new double[m];
-        this.mrtime = new double[m];
     }
 
     // 计算染色体的适应度
@@ -316,33 +298,30 @@ public class RPFSP implements Cloneable {
             prevM = schedule[indexM - 1][indexPJob][1];
         }
         Pair pair = new Pair(indexM, indexPJob - 1);
-        double[] learningTime = getLearningTime(processingTimes[indexM][ptIndex], indexM, indexPJob);
-        ltime[indexM] += learningTime[1];
         if(pmMatrix[indexM][indexPJob - 1] == 1){
             starts[indexM] = schedule[indexM][indexPJob][0] = Math.max(recordPM.get(pair) + tpm, prevM);
-            double age_e = learningTime[0];//预测役龄
-            schedule[indexM][indexPJob][1] = schedule[indexM][indexPJob][0] + learningTime[0] + Util.change(Math.pow(age_e / yita, beta)) * tmr;//MR时间计算也是使用预测役龄
-            mrtime[indexM] += Math.pow(age_e / yita, beta) * tmr;
+            double age_e = processingTimes[indexM][ptIndex];//预测役龄
+            schedule[indexM][indexPJob][1] = schedule[indexM][indexPJob][0] + processingTimes[indexM][ptIndex] + Util.change(Math.pow(age_e / yita, beta)) * tmr;//MR时间计算也是使用预测役龄
+            etime[indexM] += Math.pow(age_e / yita, beta);
             ctime[indexM] += schedule[indexM][indexPJob][1] - schedule[indexM][indexPJob][0];//实际役龄迭代需要计算攻坚实际加工时间
         }else {
             double start = Math.max(schedule[indexM][indexPJob - 1][1], prevM);
-            double age_e = ctime[indexM] + learningTime[0] + lamda[indexM] * ctime[indexM];//预测役龄只计算了工件的加工时间和恶化时间，不算MR
-            double end_e = start + learningTime[0] + lamda[indexM] * ctime[indexM] +
+            double age_e = ctime[indexM] + processingTimes[indexM][ptIndex] + lamda[indexM] * ctime[indexM];//预测役龄只计算了工件的加工时间和恶化时间，不算MR
+            double end_e = start + processingTimes[indexM][ptIndex] + lamda[indexM] * ctime[indexM] +
                     Util.change(Math.pow(age_e / yita, beta) - Math.pow(ctime[indexM] / yita, beta)) * tmr;
             if(age_e <= T){
                 schedule[indexM][indexPJob][0] = Util.change(start);
                 schedule[indexM][indexPJob][1] = end_e;
-                etime[indexM] += lamda[indexM] * ctime[indexM];
-                mrtime[indexM] += Util.change(Math.pow(age_e / yita, beta) - Math.pow(ctime[indexM] / yita, beta)) * tmr;
+                etime[indexM] += lamda[indexM] * ctime[indexM] + Util.change(Math.pow(age_e / yita, beta) - Math.pow(ctime[indexM] / yita, beta)) * tmr;
                 ctime[indexM] += schedule[indexM][indexPJob][1] - schedule[indexM][indexPJob][0];
             }else {
                 pmMatrix[indexM][indexPJob - 1] = 1;
                 recordPM.put(pair, schedule[indexM][indexPJob - 1][1]);
                 pmTime += tpm;
                 starts[indexM] = schedule[indexM][indexPJob][0] = Math.max(recordPM.get(pair) + tpm, prevM);
-                double age_e_e = learningTime[0];//役龄预测不算MR
-                schedule[indexM][indexPJob][1] = schedule[indexM][indexPJob][0] + learningTime[0] + Util.change(Math.pow(age_e_e / yita, beta)) * tmr;
-                mrtime[indexM] += Math.pow(age_e_e / yita, beta) * tmr;
+                double age_e_e = processingTimes[indexM][ptIndex];//役龄预测不算MR
+                schedule[indexM][indexPJob][1] = schedule[indexM][indexPJob][0] + processingTimes[indexM][ptIndex] + Util.change(Math.pow(age_e_e / yita, beta)) * tmr;
+                etime[indexM] += Math.pow(age_e_e / yita, beta);
                 ctime[indexM] = schedule[indexM][indexPJob][1] - schedule[indexM][indexPJob][0];
             }
         }
@@ -357,33 +336,30 @@ public class RPFSP implements Cloneable {
      */
     public void calculateAndInsertWithMap(int indexPJob, int indexC, int ptIndex, Map<Integer, Double> map) {
         Pair pair = new Pair(0, indexPJob - 1);
-        double[] learningTime = getLearningTime(processingTimes[0][ptIndex], 0, indexPJob);
-        ltime[0] += learningTime[1];
         if(pmMatrix[0][indexPJob - 1] == 1){
             starts[0] = schedule[0][indexPJob][0] = Math.max(recordPM.get(pair) + tpm, map.get(indexC));
-            double age_e = learningTime[0];//役龄预测不算MR
-            schedule[0][indexPJob][1] = schedule[0][indexPJob][0] + learningTime[0] + Util.change(Math.pow(age_e / yita, beta)) * tmr;//MR时间计算也是使用预测役龄
-            mrtime[0] += Math.pow(age_e / yita, beta) * tmr;
+            double age_e = processingTimes[0][ptIndex];//役龄预测不算MR
+            schedule[0][indexPJob][1] = schedule[0][indexPJob][0] + processingTimes[0][ptIndex] + Util.change(Math.pow(age_e / yita, beta)) * tmr;//MR时间计算也是使用预测役龄
+            etime[0] += Math.pow(age_e / yita, beta);
             ctime[0] += schedule[0][indexPJob][1] - schedule[0][indexPJob][0];//实际役龄迭代需要计算攻坚实际加工时间
         }else {
             double start = Math.max(schedule[0][indexPJob - 1][1], map.get(indexC));
-            double age_e = ctime[0] + learningTime[0] + lamda[0] * ctime[0];//预测役龄只计算了工件的加工时间和恶化时间
-            double end_e = start + learningTime[0] + lamda[0] * ctime[0] +
+            double age_e = ctime[0] + processingTimes[0][ptIndex] + lamda[0] * ctime[0];//预测役龄只计算了工件的加工时间和恶化时间
+            double end_e = start + processingTimes[0][ptIndex] + lamda[0] * ctime[0] +
                     Util.change(Math.pow(age_e / yita, beta) - Math.pow(ctime[0] / yita, beta)) * tmr;// 预测加工结束时间
             if(age_e <= T){
                 schedule[0][indexPJob][0] = Util.change(start);
                 schedule[0][indexPJob][1] = end_e;
-                etime[0] += lamda[0] * ctime[0];
-                mrtime[0] += Util.change(Math.pow(age_e / yita, beta) - Math.pow(ctime[0] / yita, beta)) * tmr;
+                etime[0] += lamda[0] * ctime[0] + Util.change(Math.pow(age_e / yita, beta) - Math.pow(ctime[0] / yita, beta)) * tmr;
                 ctime[0] += schedule[0][indexPJob][1] - schedule[0][indexPJob][0];
             }else {
                 pmMatrix[0][indexPJob - 1] = 1;
                 recordPM.put(pair, schedule[0][indexPJob - 1][1]);
                 pmTime += tpm;
                 starts[0] = schedule[0][indexPJob][0] = Math.max(recordPM.get(pair) + tpm, map.get(indexC));
-                double age_e_e = learningTime[0];//役龄预测不算MR
-                schedule[0][indexPJob][1] = schedule[0][indexPJob][0] + learningTime[0] + Util.change(Math.pow(age_e_e / yita, beta)) * tmr;
-                mrtime[0] += Math.pow(age_e_e / yita, beta) * tmr;
+                double age_e_e = processingTimes[0][ptIndex];//役龄预测不算MR
+                schedule[0][indexPJob][1] = schedule[0][indexPJob][0] + processingTimes[0][ptIndex] + Util.change(Math.pow(age_e_e / yita, beta)) * tmr;
+                etime[0] += Math.pow(age_e_e / yita, beta);
                 ctime[0] = schedule[0][indexPJob][1] - schedule[0][indexPJob][0];
             }
         }
@@ -394,19 +370,6 @@ public class RPFSP implements Cloneable {
         return schedule[processingTimes.length - 1][processingTimes[0].length - 1][1];
     }
 
-    /**
-     * 学习效应
-     * @param time 实际加工时间
-     * @param indexM 机器索引
-     * @param indexJ 工件位置索引
-     * @return
-     */
-    public double[] getLearningTime(double time, int indexM, int indexJ){
-        double[] res = new double[2];
-        res[0] = time * (M + (1 - M) * Math.pow(indexJ + 1, learning[indexM]));
-        res[1] = time - res[0];
-        return res;
-    }
 
     public static int[] getJobOrder(double[] position) {
         JobIndexPair[] jobIndexPairs = new JobIndexPair[cLength];
@@ -436,7 +399,7 @@ public class RPFSP implements Cloneable {
     public static int[] getJobOrder(int[] path) {
         int[] jobOrder = new int[path.length];
         for (int i = 0; i < path.length; i++) {
-            jobOrder[i] = path[i] % RPFSP.getN();
+            jobOrder[i] = path[i] % RPFSP_NoLearning.getN();
         }
         return jobOrder;
     }

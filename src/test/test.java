@@ -8,10 +8,11 @@ import util.Util;
  */
 public class test {
     public static void main(String[] args) {
-        Util.generateMatrix(5, 24, 10, 90);
+//        Util.generateMatrix(4, 8, 10, 90);
 //        System.out.println(Util.findLow(53, 510, 215.44));
 //        int i = 0;
 //        i += 2 - 1;
-
+        System.out.println(-Math.log(0.8));
+        System.out.println(Math.pow(-Math.log(0.8), 1.0/3) * 400);
     }
 }

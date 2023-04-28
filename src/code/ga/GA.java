@@ -13,7 +13,7 @@ public class GA {
     private static final int POPULATION_SIZE = 50;
 
     // 最大迭代次数
-    private static final int MAX_ITERATIONS = 1000;
+    private static final int MAX_ITERATIONS = 200;
 
     // 交叉概率
     private static final double CROSSOVER_RATE = 0.8;
@@ -175,6 +175,7 @@ public class GA {
         optIndividual.init();
         double bestfit = optIndividual.calculateFitness();
         for (int i = 1; i < POPULATION_SIZE; i++) {
+            population[i].init();
             double completionFit = population[i].calculateFitness();
             if (completionFit > bestfit) {
                 optIndividual = population[i];
