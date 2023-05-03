@@ -13,7 +13,7 @@ public class GA {
     private static final int POPULATION_SIZE = 50;
 
     // 最大迭代次数
-    private static final int MAX_ITERATIONS = 200;
+    private static final int MAX_ITERATIONS = 1500;
 
     // 交叉概率
     private static final double CROSSOVER_RATE = 0.8;

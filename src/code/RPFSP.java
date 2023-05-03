@@ -145,8 +145,8 @@ public class RPFSP implements Cloneable {
             tmr = Double.valueOf(sArr[1]);
             beta = Integer.valueOf(sArr[2]);
             yita = Integer.valueOf(sArr[3]);
-//            T = Util.change(yita * Math.pow(-Math.log(0.8), 1.0 / beta));
-            T = 1000;
+            T = Util.change(yita * Math.pow(-Math.log(0.8), 1.0 / beta));
+//            T = 1000;
             String[] sArr1 = reader.readLine().split(" ");
             up = (int) (T + Integer.parseInt(sArr1[0]) + tpm);
             low = (int) (T - Integer.parseInt(sArr1[1]));

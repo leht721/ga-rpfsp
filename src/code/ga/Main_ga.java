@@ -33,8 +33,8 @@ public class Main_ga {
         }
         double[][][] arr = best.getSchedule();
         Map<Pair, Double> recordPM = best.getRecordPM();
-//        Util.write(arr, best.chromosome, ga.getRecord(), recordPM, "C:\\Users\\82413\\Desktop\\rpfsp.xlsx");
-        Util.write(arr, best.chromosome, new double[200], recordPM, "C:\\Users\\82413\\Desktop\\rpfsp.xlsx");
+        Util.write(arr, best.chromosome, ga.getRecord(), recordPM, "C:\\Users\\82413\\Desktop\\rpfsp.xlsx");
+//        Util.write(arr, best.chromosome, new double[200], recordPM, "C:\\Users\\82413\\Desktop\\rpfsp.xlsx");
         System.out.println(" ");
     }
 }

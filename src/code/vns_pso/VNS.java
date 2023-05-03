@@ -10,7 +10,7 @@ import java.util.Random;
  * 2023-04-17 10:24
  */
 public class VNS {
-    private static final int IMAX = 500;
+    private static final int IMAX = 200;
 
     // 传入的pso的全局最优粒子
     private int[] psoSolution;
