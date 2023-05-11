@@ -7,12 +7,12 @@ import java.util.Arrays;
 import java.util.Random;
 
 public class PSO {
-    private static final int NUM_PARTICLES = 30;
-    private static final int NUM_ITERATIONS = 300;
+    private static final int NUM_PARTICLES = 170;
+    private static final int NUM_ITERATIONS = 1000;
     private static final double C1 = 2.0;
     private static final double C2 = 2.0;
     private static final double W = 0.7;
-    private static Particle gBest; // 全局最优
+    private Particle gBest; // 全局最优
     private double[] record;
 
     public double[] getRecord() {
@@ -28,8 +28,14 @@ public class PSO {
         // Initialize particles
         Random rand = new Random();
         for (int i = 0; i < NUM_PARTICLES; i++) {
-            particles[i] = new Particle(RPFSP.getN() * RPFSP.getL());
-            particles[i].initialize(rand);
+            if(i < 10){
+                particles[i] = new Particle(RPFSP.getN() * RPFSP.getL(), new int[]{9, 4, 1, 6, 2, 0, 5, 1, 3, 6, 3, 7, 8, 5, 2, 9, 8, 3, 0, 2, 5, 8, 4, 1, 7, 9, 6, 4, 7, 0});
+            }else {
+                particles[i] = new Particle(RPFSP.getN() * RPFSP.getL());
+                particles[i].initialize(rand);
+            }
+//            particles[i] = new Particle(RPFSP.getN() * RPFSP.getL());
+//            particles[i].initialize(rand);
             double p = particles[i].getFitness(particles[i].getPosition());
             double g = gBest.getFitness(gBest.getPosition());
             if (i == 0 || p > g) {

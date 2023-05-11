@@ -1,6 +1,6 @@
-package code;
+package test;
 
-
+import code.RPFSP;
 import util.Pair;
 import util.Util;
 
@@ -12,24 +12,17 @@ import java.util.*;
 
 import static util.Util.shuffleArray;
 
-/**
- * 重入层数为l，基于役龄的维护策略
- * @author neulht @create
- * 2023-03-14 16:23
- */
-public class RPFSP implements Cloneable {
+public class NEHAlgorithm {
+
+
     private static int[][] processingTimes; // 工件在各个生产阶段的加工时间
-    private static int[][] mTimes; // 工件在各个生产阶段的加工时间
     private static int m;  // 生产车间中的机器数量
     private static int n; // 工件个数
-    private static double beta; //Weibull分布形状参数β
-    private static double yita; //Weibull分布尺度参数η
-    private static double R; //Weibull分布尺度参数η
+    private static int beta; //Weibull分布形状参数β
+    private static int yita; //Weibull分布尺度参数η
     private static double tmr; //MR时间
     private static double tpm; //PM时间
     private static double T; //维护周期
-    private static int up; //时间窗上界
-    private static int low; //时间窗下界
     private static double[] lamda; //恶化因子
     private static double[] learning; //学习因子
     private static final double M = 0.6; // 压缩系数
@@ -68,7 +61,6 @@ public class RPFSP implements Cloneable {
                     processingTimes[i][j] = Integer.parseInt(values[j]);
                 }
             }
-            mTimes = change(processingTimes);
             String[] arr = reader.readLine().split(" ");
             lamda = new double[m];
             for (int i = 0; i < arr.length; i++) {
@@ -87,20 +79,26 @@ public class RPFSP implements Cloneable {
         }
     }
 
-    public static int[][] getProcessingTimes() {
-        return processingTimes;
+    //初始化相关参数
+    static {
+        BufferedReader reader = null;
+        try {
+//            reader = new BufferedReader(new FileReader("C:\\Users\\Administrator\\Desktop\\b.txt"));
+            reader = new BufferedReader(new FileReader("C:\\Users\\82413\\Desktop\\b.txt"));
+            String[] sArr = reader.readLine().split(" ");
+            tpm = Double.valueOf(sArr[0]);
+            tmr = Double.valueOf(sArr[1]);
+            beta = Integer.valueOf(sArr[2]);
+            yita = Integer.valueOf(sArr[3]);
+            T = Util.change(yita * Math.pow(-Math.log(0.8), 1.0 / beta));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    private static int[][] change(int[][] processingTimes) {
-        int[][] mTimes = new int[processingTimes[0].length][processingTimes.length];
-        for (int i = 0; i < processingTimes.length; i++) {
-            for (int j = 0; j < processingTimes[0].length; j++) {
-                mTimes[j][i] = processingTimes[i][j];
-            }
-        }
-        return mTimes;
-    }
-    public RPFSP() {
+    public double decodeChromosome(int[] chromosome) {
         this.pmMatrix = new int[m][cLength];
         this.pmTime = 0.0;
         this.recordPM = new HashMap<Pair, Double>();
@@ -111,169 +109,8 @@ public class RPFSP implements Cloneable {
         this.schedule = new double[m][cLength][2];
         chromosome = new int[cLength];
         this.starts = new double[m];
-        int k = 0;
-        int j = 0;
-        while(j < cLength) {
-            for (int i = 0; i < l; i++) {
-                chromosome[j++] = k;
-            }
-            k++;
-        }
-        chromosome = shuffleArray(chromosome);
-    }
-
-    public RPFSP(int[] chromosome) {
-        this.pmMatrix = new int[m][cLength];
-        this.pmTime = 0.0;
-        this.recordPM = new HashMap<Pair, Double>();
-        this.ctime = new double[m];
-        this.etime = new double[m];
-        this.mrtime = new double[m];
-        this.ltime = new double[m];
-        this.schedule = new double[m][cLength][2];
-        this.chromosome = Arrays.copyOf(chromosome, chromosome.length);
-        this.starts = new double[m];
-    }
-
-    //初始化相关参数
-    static {
-        BufferedReader reader = null;
-        try {
-//            reader = new BufferedReader(new FileReader("C:\\Users\\Administrator\\Desktop\\b.txt"));
-//            reader = new BufferedReader(new FileReader("C:\\Users\\82413\\Desktop\\b.txt"));
-            reader = new BufferedReader(new FileReader("C:\\Users\\82413\\Desktop\\参数\\田口\\25.txt"));
-            String[] sArr = reader.readLine().split(" ");
-            tpm = Double.valueOf(sArr[0]);
-            tmr = Double.valueOf(sArr[1]);
-            beta = Double.valueOf(sArr[2]);
-            yita = Double.valueOf(sArr[3]);
-            R = Double.valueOf(sArr[4]);
-            T = Util.change(yita * Math.pow(-Math.log(R), 1.0 / beta));
-//            T = 1000;
-//            String[] sArr1 = reader.readLine().split(" ");
-//            up = (int) (T + Integer.parseInt(sArr1[0]) + tpm);
-//            low = (int) (T - Integer.parseInt(sArr1[1]));
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    @Override
-    public RPFSP clone() throws CloneNotSupportedException {
-        RPFSP clone = new RPFSP();
-        clone = (RPFSP) super.clone();
-        clone.chromosome = Arrays.copyOf(this.chromosome, this.chromosome.length);
-        clone.recordPM = new HashMap<>(this.recordPM);
-        clone.pmMatrix = new int[m][cLength];
-        clone.ctime = new double[m];
-        clone.etime = new double[m];
-        clone.mrtime = new double[m];
-        clone.ltime = new double[m];
-        for (int i = 0; i < clone.ctime.length; i++) {
-            clone.ctime[i] = this.ctime[i];
-            clone.etime[i] = this.etime[i];
-            clone.mrtime[i] = this.mrtime[i];
-            clone.ltime[i] = this.ltime[i];
-        }
-        clone.schedule = new double[m][cLength][2];
-        for (int i = 0; i < clone.schedule.length; i++) {
-            for (int j = 0; j < clone.schedule[0].length; j++) {
-                clone.schedule[i][j][0] = this.schedule[i][j][0];
-                clone.schedule[i][j][1] = this.schedule[i][j][1];
-            }
-        }
-        clone.starts = Arrays.copyOf(this.starts, this.starts.length);
-        return clone;
-    }
-
-    public static double getTpm() {
-        return tpm;
-    }
-
-    public static double getT() {
-        return T;
-    }
-
-    public static int getUp() {
-        return up;
-    }
-
-    public static int getLow() {
-        return low;
-    }
-
-    public static int getM() {
-        return m;
-    }
-
-    public static int getN() {
-        return n;
-    }
-
-    public int[][] getPmMatrix() {
-        return pmMatrix;
-    }
-
-    public static int getL() {
-        return l;
-    }
-
-    public double getPmTime() {
-        return pmTime;
-    }
-
-    public double[] getMrtime() {
-        return mrtime;
-    }
-
-    public double[] getLtime() {
-        return ltime;
-    }
-
-    public Map<Pair, Double> getRecordPM() {
-        return recordPM;
-    }
-
-    public double[] getEtime() {
-        return etime;
-    }
-
-    public double[][][] getSchedule() {
-        return schedule;
-    }
-
-
-    public void init(){
-        this.pmMatrix = new int[m][cLength];
-        this.pmTime = 0.0;
-        this.recordPM = new HashMap<Pair, Double>();
-        this.ctime = new double[m];
-        this.etime = new double[m];
-        this.schedule = new double[m][cLength][2];
-        this.ltime = new double[m];
-        this.mrtime = new double[m];
-    }
-
-    // 计算染色体的适应度
-    public double calculateFitness() {
-        double[][][] schedule = decodeChromosome(this.chromosome);
-        double maxCompletionTime = getMaxCompletionTime(schedule);
-        return 1.0 / maxCompletionTime;
-    }
-
-
-
-    /**
-     * 解码染色体为生产计划---待测试
-     * TODO 测试
-     * @param chromosome
-     * @return
-     */
-    public double[][][] decodeChromosome(int[] chromosome) {
-        this.schedule = new double[processingTimes.length][processingTimes[0].length][2];
-        schedule[0][0] = new double[]{0, processingTimes[0][chromosome[0]]};
+        this.schedule = new double[processingTimes.length][chromosome.length][2];
+        schedule[0][0] = new double[]{0, processingTimes[0][chromosome.length]};
         ctime[0] = schedule[0][0][1];
         for (int i = 1; i < processingTimes.length; i++) {
             schedule[i][0] = new double[]{schedule[i - 1][0][1], schedule[i - 1][0][1] + processingTimes[i][chromosome[0]]};
@@ -283,7 +120,7 @@ public class RPFSP implements Cloneable {
             starts[i] = schedule[i][0][0];
         }
         Map<Integer, Double> map = new HashMap();
-        Map<Integer, Integer> recordL = new HashMap<Integer, Integer>();
+        Map<Integer, Integer> recordL = new HashMap<>();
         map.put(chromosome[0], schedule[processingTimes.length - 1][0][1]);
         recordL.put(chromosome[0], 1);
         for (int i = 1; i < chromosome.length; i++) {
@@ -302,7 +139,7 @@ public class RPFSP implements Cloneable {
                 recordL.put(chromosome[i], 1);
             }
         }
-        return schedule;
+        return schedule[processingTimes.length - 1][chromosome.length - 1][1];
     }
 
     /**
@@ -392,18 +229,6 @@ public class RPFSP implements Cloneable {
         }
     }
 
-    // 获取生产计划中最大的完成时间
-    public double getMaxCompletionTime(double[][][] schedule) {
-        return schedule[processingTimes.length - 1][processingTimes[0].length - 1][1];
-    }
-
-    /**
-     * 学习效应
-     * @param time 实际加工时间
-     * @param indexM 机器索引
-     * @param indexJ 工件位置索引
-     * @return
-     */
     public double[] getLearningTime(double time, int indexM, int indexJ){
         double[] res = new double[2];
         res[0] = time * (M + (1 - M) * Math.pow(indexJ + 1, learning[indexM]));
@@ -411,37 +236,88 @@ public class RPFSP implements Cloneable {
         return res;
     }
 
-    public static int[] getJobOrder(double[] position) {
-        JobIndexPair[] jobIndexPairs = new JobIndexPair[cLength];
-        int index = 0;
-        int i = 0;
-        while (i < cLength) {
-            for (int j = 0; j < l; j++) {
-                jobIndexPairs[i] = new JobIndexPair(index, position[i]);
-                i++;
-            }
-            index++;
-        }
-        Arrays.sort(jobIndexPairs, Comparator.comparingDouble(j -> j.position));
+    // NEH启发式算法
+//    public ArrayList<Integer> NEH(int[][] jobs) {
+//        ArrayList<Integer> res = new ArrayList<Integer>();
+//        int[] l = new int[NEHAlgorithm.n];
+//        for (int i = 0; i < l.length; i++) {
+//            l[i] = NEHAlgorithm.l - 1;
+//        }
+//        int[] flag = new int[NEHAlgorithm.n];
+//        for (int i = 0; i < NEHAlgorithm.n; i++) {
+//            flag[i] = 0;
+//        }
+//        int[] index = new int[NEHAlgorithm.n];
+//        for (int i = 0; i < index.length; i++) {
+//            index[i] = 0;
+//        }
+//        TreeMap<Double, Integer> treemap = new TreeMap<Double, Integer>(new Comparator<Double>() {
+//            @Override
+//            public int compare(Double o1, Double o2) {
+//                return o2.compareTo(o1);
+//            }
+//        });
+//        for (int i = 0; i < NEHAlgorithm.n; i++) {
+//            double sum = 0;
+//            for (int j = 0; j < processingTimes.length; j++) {
+//                sum += processingTimes[j][i];
+//            }
+//            treemap.put(sum + Math.random(), i);
+//        }
+//        Double F1 = treemap.firstKey();
+//        Double F2 = treemap.firstKey();
+//        int integer = treemap.get(F1);
+//        int integer1 = treemap.get(F2);
+//        int[] ints = {integer, integer1};
+//        int[] ints1 = {integer1, integer};
+//        if(cal(ints) > cal(ints1)){
+//            res.add(integer1);
+//            res.add(integer);
+//        }else {
+//            res.add(integer);
+//            res.add(integer1);
+//        }
+//        flag[integer]++;
+//        flag[integer1]++;
+//        l[integer]--;
+//        l[integer1]--;
+//        treemap.remove(F1);
+//        treemap.remove(F2);
+//        Double sum = 0.0;
+//        for (int i = 0; i < processingTimes.length; i++) {
+//            sum += processingTimes[i][integer + flag[integer] * NEHAlgorithm.n];
+//        }
+//        treemap.put(sum, integer);
+//        sum = 0.0;
+//        for (int i = 0; i < processingTimes.length; i++) {
+//            sum += processingTimes[i][integer1 + flag[integer1] * NEHAlgorithm.n];
+//        }
+//        treemap.put(sum, integer1);
+//        while (treemap.size() != 0){
+//
+//        }
+//
+//    }
+//
+//
+//    // 测试NEH算法
+//    public static void main(String[] args) {
+//        int[][] jobs = RPFSP.getProcessingTimes();
+//        ArrayList<Integer> order = NEH(jobs);
+//        System.out.println("最优调度顺序为：" + order);
+//        System.out.println("最小完成时间为：" + getCompletionTime(jobs, order));
+//    }
 
-        int[] jobOrder = new int[cLength];
-        i = index = 0;
-        while (i < cLength) {
-            for (int j = 0; j < l; j++) {
-                jobOrder[i] = jobIndexPairs[i].index;
-                i++;
-            }
-        }
-        jobOrder[index] = jobIndexPairs[index].index;
-        return jobOrder;
+    public double cal(int[] arr){
+        NEHAlgorithm nehAlgorithm = new NEHAlgorithm();
+        double v = nehAlgorithm.decodeChromosome(new int[]{6,6});
+        return v;
     }
 
-    public static int[] getJobOrder(int[] path) {
-        int[] jobOrder = new int[path.length];
-        for (int i = 0; i < path.length; i++) {
-            jobOrder[i] = path[i] % RPFSP.getN();
-        }
-        return jobOrder;
-    }
+    public static void main(String args[]){
+        NEHAlgorithm nehAlgorithm = new NEHAlgorithm();
+        double v = nehAlgorithm.decodeChromosome(new int[]{6,6});
+        System.out.println(v);
 
-}
+    }
+ }

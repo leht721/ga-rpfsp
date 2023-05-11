@@ -1,6 +1,7 @@
 package code.pso;
 
 import code.RPFSP;
+import code.spso.SA_PSO;
 
 import java.util.Arrays;
 import java.util.Random;
@@ -20,6 +21,16 @@ public class Particle {
         this.position = new double[jobLength];
         this.velocity = new double[jobLength];
         this.pBest = new double[jobLength];
+    }
+    public Particle(int jobLength,int[] chrom) {
+        this.jobLength = jobLength;
+        this.position = SA_PSO.convertToPosition(chrom);
+        this.velocity = new double[jobLength];
+        Random random = new Random();
+        for (int i = 0; i < velocity.length; i++) {
+            velocity[i] = (random.nextDouble() - 0.5) * 2.0;
+        }
+        this.pBest = Arrays.copyOf(position, jobLength);;
     }
 
     public double[] getpBest() {
@@ -47,6 +58,11 @@ public class Particle {
             double r1 = rand.nextDouble();
             double r2 = rand.nextDouble();
             velocity[i] = w * velocity[i] + c1 * r1 * (pBest[i] - position[i]) + c2 * r2 * (gBest.position[i] - position[i]);
+            if(velocity[i] > 1){
+                velocity[i] = 1;
+            }else if(velocity[i] < -1){
+                velocity[i] = -1;
+            }
         }
     }
 

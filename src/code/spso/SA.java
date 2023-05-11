@@ -14,7 +14,7 @@ public class SA {
     // 降温速率
     private static final double COOLINGRATE = 0.95;
     // 内循环次数
-    private static final int N = 100;
+    private static final int N = 2;
 
     // 传入的pso的全局最优粒子
     private int[] psoSolution;
@@ -113,6 +113,8 @@ public class SA {
         }
         return copy;
     }
+
+
 
 
     // 模拟退火算法

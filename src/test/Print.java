@@ -1,4 +1,4 @@
-package code.ga;
+package test;
 
 import code.RPFSP;
 import util.Pair;
@@ -9,15 +9,17 @@ import java.util.Map;
 
 /**
  * @author neulht @create
- * 2023-03-20 15:43
+ * 2023-05-04 21:04
  */
-public class Main_ga {
-    public static void main(String[] args) throws CloneNotSupportedException {
-        GA ga = new GA();
-        RPFSP best = ga.solve();
-        System.out.print("最优序列:" + Arrays.toString(best.chromosome));
+public class Print {
+    public static void main(String[] args) {
+        int[] arr = new int[]{28, 25, 3, 24, 20, 4, 11, 24, 17, 25, 5, 22, 0, 21, 12, 14, 5, 17, 27, 28, 11, 16, 6,
+                12, 26, 10, 3, 18, 22, 27, 16, 8, 9, 24, 21, 26, 29, 13, 20, 1, 17, 19, 4, 6, 7, 14, 16, 23, 22, 5, 8, 29, 4, 2, 14, 10, 15, 9, 6, 29, 7,
+                25, 19, 27, 3, 28, 15, 20, 26, 0, 1, 21, 19, 2, 18, 13, 8, 15, 23, 9, 10, 2, 13, 12, 7, 18, 0, 1, 23, 11};
+        RPFSP best = new RPFSP(arr);
+        System.out.println("最优序列:" + Arrays.toString(best.chromosome));
         best.init();
-//        RPFSP best = new RPFSP(new int[]{7, 1, 5, 6, 8, 3, 0, 4, 7, 6, 2, 9, 3, 4, 8, 5, 1, 2, 0, 3, 6, 4, 7, 9, 2, 5, 0, 1, 8, 9});
+//        RPFSP best = new RPFSP(new int[]{1, 0, 3, 2, 1, 0, 3, 2});
         System.out.println("最小目标值:" + Util.change(best.getMaxCompletionTime(best.decodeChromosome(best.chromosome))));
         System.out.println("总线性恶化时间:" + Arrays.stream(best.getEtime()).sum());
         System.out.println("总MR时间:" + Arrays.stream(best.getMrtime()).sum());
@@ -31,10 +33,7 @@ public class Main_ga {
             }
             System.out.println(); // 换行
         }
-        double[][][] arr = best.getSchedule();
         Map<Pair, Double> recordPM = best.getRecordPM();
-        Util.write(arr, best.chromosome, ga.getRecord(), recordPM, "C:\\Users\\82413\\Desktop\\rpfsp.xlsx");
-//        Util.write(arr, best.chromosome, new double[200], recordPM, "C:\\Users\\82413\\Desktop\\rpfsp.xlsx");
         System.out.println(" ");
     }
 }

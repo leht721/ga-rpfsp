@@ -13,7 +13,7 @@ public class AntSolver {
     public static double RHO; // 信息素蒸发率---r值大的时候以前走过的路再走的可能性较低，可以增高全局搜索能力
     public static final double Q = 2500.0; // 信息素增量
     public static final int NUM_ANTS = 35; // 蚂蚁数量
-    public static final int MAX_ITERATIONS = 600; // 最大迭代次数
+    public static final int MAX_ITERATIONS = 1000; // 最大迭代次数
     public static final int jobLength = RPFSP.getL() * RPFSP.getN();
     private double[][] pheromoneMatrix; // 信息素矩阵
     private double[][] heuristicMatrix; // 启发式信息矩阵

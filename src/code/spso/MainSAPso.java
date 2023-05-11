@@ -18,6 +18,6 @@ public class MainSAPso {
         double[] arr = sa_pso.getRecord();
         System.out.println(solve.getMaxCompletionTime(solve.decodeChromosome(solve.chromosome)));
         System.out.println(Arrays.toString(solve.chromosome));
-        Util.write(arr, "C:\\Users\\82413\\Desktop\\pso.xlsx", 3, 0);
+        Util.write(arr, "C:\\Users\\82413\\Desktop\\pso.xlsx", 1, 0);
     }
 }

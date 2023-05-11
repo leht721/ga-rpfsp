@@ -9,8 +9,8 @@ import java.util.Random;
  * @author neulht @create
  * 2023-04-17 10:24
  */
-public class VNS {
-    private static final int IMAX = 1;
+public class VNS_Shaking {
+    private static final int IMAX = 100;
 
     // 传入的pso的全局最优粒子
     private int[] psoSolution;
@@ -20,11 +20,14 @@ public class VNS {
     private int[] bestSolution;
     private double bestCmax;
 
-    public VNS(int[] psoSolution, double psoCmax) {
+    private double[] curPosition;
+
+    public VNS_Shaking(int[] psoSolution, double psoCmax, double[] gbestposition) {
         this.psoSolution = Arrays.copyOf(psoSolution, psoSolution.length);
         this.psoCmax = psoCmax;
         this.bestCmax = psoCmax;
         this.bestSolution = Arrays.copyOf(psoSolution, psoSolution.length);
+        this.curPosition = Arrays.copyOf(gbestposition, gbestposition.length);
     }
 
     /**
@@ -110,60 +113,6 @@ public class VNS {
         return copy;
     }
 
-    /**
-     * 交换相邻
-     * @param order
-     * @return
-     */
-    public  int[] generateNeighbor3(int[] order) {
-        int[] copy = Arrays.copyOf(order, order.length);
-        int n = order.length;
-        Random rand = new Random();
-        int a = rand.nextInt(n - 3) + 2; // 生成大于1小于n-2的随机整数a
-        int temp = order[a]; // 交换arr[a]和arr[a-1]
-        copy[a] = order[a-1];
-        copy[a-1] = temp;
-        return copy;
-    }
-
-
-    /**
-     * 随机交换两个不同位置
-     * @param order
-     * @return
-     */
-    public int[] generateNeighbor5(int[] order) {
-        int n = order.length;
-        Random rand = new Random();
-        int i, j;
-        do {
-            i = rand.nextInt(n); // 随机选择第一个位置
-            j = rand.nextInt(n - 1); // 随机选择第二个位置，但不能与第一个位置相同
-            if (j >= i) {
-                j++; // 如果第二个位置在第一个位置之后，将其向后移动一位
-            }
-        } while (i == j); // 如果两个位置相同，则重新生成位置
-        int[] newArr = Arrays.copyOf(order, n); // 复制原始数组
-        int temp = newArr[i];
-        newArr[i] = newArr[j];
-        newArr[j] = temp;
-        return newArr;
-    }
-
-    /**
-     * 交换首尾
-     * @param order
-     * @return
-     */
-    public  int[] generateNeighbor6(int[] order) {
-        int[] copy = Arrays.copyOf(order, order.length);
-        int b = order.length - 1;
-        int temp = order[b]; // 交换arr[a]和arr[a-1]
-        copy[b] = order[0];
-        copy[0] = temp;
-        return copy;
-    }
-
     // 变邻域搜索算法
     public int[] solve() {
 //        System.out.println("VNS前=====" + bestCmax);
@@ -175,27 +124,31 @@ public class VNS {
         // 在每个温度下迭代一定次数，进行状态转移
         for (int i = 0; i < IMAX; i++) {
             int l = 1;
+            RPFSP tmp = null;
             // 产生邻域解
-            while(l <= 6){
+            while(l <= 3){
                 boolean flag = true;
                 switch (l){
                     case 1:
+                        curPosition = shaking(curPosition);
+                        currentOrder = RPFSP.getJobOrder(curPosition);
+                        tmp = new RPFSP(currentOrder);
+                        currentCmax = tmp.getMaxCompletionTime(tmp.decodeChromosome(tmp.chromosome));
                         neighborOrder = generateNeighbor(currentOrder);
                         break;
                     case 2:
+                        curPosition = shaking(curPosition);
+                        currentOrder = RPFSP.getJobOrder(curPosition);
+                        tmp = new RPFSP(currentOrder);
+                        currentCmax = tmp.getMaxCompletionTime(tmp.decodeChromosome(tmp.chromosome));
                         neighborOrder = generateNeighbor1(currentOrder);
                         break;
                     case 3:
+                        curPosition = shaking(curPosition);
+                        currentOrder = RPFSP.getJobOrder(curPosition);
+                        tmp = new RPFSP(currentOrder);
+                        currentCmax = tmp.getMaxCompletionTime(tmp.decodeChromosome(tmp.chromosome));
                         neighborOrder = generateNeighbor2(currentOrder);
-                        break;
-                    case 4:
-                        neighborOrder = generateNeighbor3(currentOrder);
-                        break;
-                    case 5:
-                        neighborOrder = generateNeighbor5(currentOrder);
-                        break;
-                    case 6:
-                        neighborOrder = generateNeighbor6(currentOrder);
                         break;
                     default:
                         neighborOrder = Arrays.copyOf(currentOrder, currentOrder.length);
@@ -210,10 +163,12 @@ public class VNS {
                         bestCmax = neighborMaxTime;
                         currentOrder = Arrays.copyOf(neighborOrder, neighborOrder.length);
                         currentCmax = neighborMaxTime;
+                        curPosition = convertToPosition1(curPosition, neighborOrder);
                         l = 1;
                     }else if(neighborMaxTime < currentCmax){
                         currentOrder = Arrays.copyOf(neighborOrder, neighborOrder.length);
                         currentCmax = neighborMaxTime;
+                        curPosition = convertToPosition1(curPosition, neighborOrder);
                         l = 1;
                     }else {
                         // 计算能量差
@@ -221,17 +176,18 @@ public class VNS {
                         // 否则以一定概率接受邻域解
                         double landa;
                         if(i < 100){
-                            landa = 0.4;
+                            landa = 0.8;
                         }else if(i < 250){
-                            landa = 0.25;
+                            landa = 0.45;
                         }else{
-                            landa = 0.15;
+                            landa = 0.3;
                         }
-                        double t = landa * bestCmax * 0.02;
+                        double t = landa * bestCmax * 0.05;
                         double p = Math.exp(-delta / t);
                         if (Math.random() < p) {
-                            currentOrder =  Arrays.copyOf(neighborOrder, neighborOrder.length);
+                            currentOrder = neighborOrder;
                             currentCmax = neighborMaxTime;
+                            curPosition = convertToPosition1(curPosition, neighborOrder);
                             l = 1;
                         }else {
                             l++;
@@ -245,5 +201,35 @@ public class VNS {
         }
 //        System.out.println("vns后===" + bestCmax);
         return bestSolution;
+    }
+
+    private double[] shaking(double[] curPosition) {
+        int n = (int) (0.1 * RPFSP.getL() * RPFSP.getN());
+        Random random = new Random();
+        int i = random.nextInt(RPFSP.getL() * RPFSP.getN());
+        while((i + n) >= RPFSP.getL() * RPFSP.getN()){
+            i = random.nextInt(RPFSP.getL() * RPFSP.getN());
+        }
+        double[] doubles = Arrays.copyOf(curPosition, curPosition.length);
+        for (int j = i; j < i + n; j++) {
+            doubles[j] = doubles[j] * (Math.random() * 0.3 + 0.8);
+        }
+        return doubles;
+    }
+
+    private double[] convertToPosition1(double[] position, int[] solve) {
+        double[] doubles = Arrays.copyOf(position, position.length);
+        Arrays.sort(doubles);
+        double[] res = new double[doubles.length];
+        int[] index = new int[RPFSP.getN()];
+        for (int i = 0; i < index.length; i++) {
+            index[i] = i * RPFSP.getL();
+        }
+        int f = 0;
+        for (int i = 0; i < res.length; i++) {
+            res[index[solve[i]]] = doubles[i];
+            index[solve[i]]++;
+        }
+        return res;
     }
 }
